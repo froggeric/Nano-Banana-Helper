@@ -18,11 +18,11 @@ struct AspectRatio: Identifiable, Hashable, Sendable {
     let height: CGFloat // For icon drawing (relative)
     
     // API Value. "auto" for the Auto id, otherwise the id itself.
-    var apiValue: String {
+    nonisolated var apiValue: String {
         return id == "Auto" ? "auto" : id
     }
     
-    static let all: [AspectRatio] = [
+    nonisolated static let all: [AspectRatio] = [
         // Auto
         AspectRatio(id: "Auto", displayName: "Auto", category: .auto, width: 1, height: 1), // Icon can be special
         
@@ -43,11 +43,11 @@ struct AspectRatio: Identifiable, Hashable, Sendable {
         AspectRatio(id: "9:16", displayName: "9:16", category: .portrait, width: 9, height: 16)
     ]
     
-    static var `default`: AspectRatio {
+    nonisolated static var `default`: AspectRatio {
         all.first(where: { $0.id == "16:9" }) ?? all[0]
     }
     
-    static func from(string: String) -> AspectRatio {
+    nonisolated static func from(string: String) -> AspectRatio {
         // Match by ID or apiValue, case-insensitive
         return all.first { 
             $0.id.lowercased() == string.lowercased() || 

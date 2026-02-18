@@ -43,10 +43,8 @@ class BatchStagingManager {
     func clearAll() {
         stagedFiles.removeAll()
         stagedBookmarks.removeAll()
-        // Do NOT clear system prompt on batch clear, it's persistent configuration
     }
     
-    /// Returns the security-scoped bookmark for a staged URL, if available
     func bookmark(for url: URL) -> Data? {
         stagedBookmarks[url]
     }

@@ -2,6 +2,8 @@
 
 Nano Banana Helper is a powerful macOS application for batch processing image edits using Google's generative AI (Gemini). It allows users to orchestrate complex image transformation workflows, manage costs, and organize projects efficiently.
 
+![MainScreen](https://github.com/joshmac007/Nano-Banana-Helper/blob/main/MainScreen.jpeg)
+
 ![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)

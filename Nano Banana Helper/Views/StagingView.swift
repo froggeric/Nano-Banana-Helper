@@ -77,7 +77,19 @@ struct StagingView: View {
             allowsMultipleSelection: true
         ) { result in
             if case .success(let urls) = result {
-                stagingManager.addFiles(urls)
+                // Create security-scoped bookmarks for each URL so we can
+                // access the files later when the batch job runs.
+                var bookmarks: [URL: Data] = [:]
+                for url in urls {
+                    let didStart = url.startAccessingSecurityScopedResource()
+                    if let bookmark = AppPaths.bookmark(for: url) {
+                        bookmarks[url] = bookmark
+                    }
+                    if didStart {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                stagingManager.addFiles(urls, bookmarks: bookmarks)
             }
         }
     }

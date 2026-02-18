@@ -316,6 +316,7 @@ class BatchJob: Identifiable, Codable {
     let createdAt: Date
     var projectId: UUID?
     var prompt: String
+    var systemPrompt: String? // Added
     var aspectRatio: String
     var imageSize: String
     var outputDirectory: String
@@ -324,7 +325,7 @@ class BatchJob: Identifiable, Codable {
     var tasks: [ImageTask]
 
     enum CodingKeys: String, CodingKey {
-        case id, createdAt, projectId, prompt, aspectRatio, imageSize, outputDirectory, useBatchTier, status, tasks
+        case id, createdAt, projectId, prompt, systemPrompt, aspectRatio, imageSize, outputDirectory, useBatchTier, status, tasks
     }
 
     required init(from decoder: Decoder) throws {
@@ -333,6 +334,7 @@ class BatchJob: Identifiable, Codable {
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         projectId = try container.decodeIfPresent(UUID.self, forKey: .projectId)
         prompt = try container.decode(String.self, forKey: .prompt)
+        systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) // Decode if present
         aspectRatio = try container.decode(String.self, forKey: .aspectRatio)
         imageSize = try container.decode(String.self, forKey: .imageSize)
         outputDirectory = try container.decode(String.self, forKey: .outputDirectory)
@@ -347,6 +349,7 @@ class BatchJob: Identifiable, Codable {
         try container.encode(createdAt, forKey: .createdAt)
         try container.encode(projectId, forKey: .projectId)
         try container.encode(prompt, forKey: .prompt)
+        try container.encode(systemPrompt, forKey: .systemPrompt)
         try container.encode(aspectRatio, forKey: .aspectRatio)
         try container.encode(imageSize, forKey: .imageSize)
         try container.encode(outputDirectory, forKey: .outputDirectory)
@@ -357,6 +360,7 @@ class BatchJob: Identifiable, Codable {
     
     init(
         prompt: String,
+        systemPrompt: String? = nil,
         aspectRatio: String = "16:9",
         imageSize: String = "4K",
         outputDirectory: String,
@@ -367,6 +371,7 @@ class BatchJob: Identifiable, Codable {
         self.createdAt = Date()
         self.projectId = projectId
         self.prompt = prompt
+        self.systemPrompt = systemPrompt
         self.aspectRatio = aspectRatio
         self.imageSize = imageSize
         self.outputDirectory = outputDirectory
@@ -453,6 +458,7 @@ enum JobPhase: String, Codable {
 class ImageTask: Identifiable, Codable {
     let id: UUID
     let inputPaths: [String] // Changed to array for multimodal support
+    var inputBookmarks: [Data]? // Security-scoped bookmarks for file picker selections
     var outputPath: String?
     var status: String
     var phase: JobPhase
@@ -465,13 +471,14 @@ class ImageTask: Identifiable, Codable {
     var projectId: UUID? // Added for filtering results by project
 
     enum CodingKeys: String, CodingKey {
-        case id, inputPaths, outputPath, status, phase, pollCount, error, startedAt, submittedAt, completedAt, externalJobName, projectId
+        case id, inputPaths, inputBookmarks, outputPath, status, phase, pollCount, error, startedAt, submittedAt, completedAt, externalJobName, projectId
     }
 
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         inputPaths = try container.decode([String].self, forKey: .inputPaths)
+        inputBookmarks = try container.decodeIfPresent([Data].self, forKey: .inputBookmarks)
         outputPath = try container.decodeIfPresent(String.self, forKey: .outputPath)
         status = try container.decode(String.self, forKey: .status)
         phase = try container.decodeIfPresent(JobPhase.self, forKey: .phase) ?? .pending
@@ -488,6 +495,7 @@ class ImageTask: Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(inputPaths, forKey: .inputPaths)
+        try container.encodeIfPresent(inputBookmarks, forKey: .inputBookmarks)
         try container.encode(outputPath, forKey: .outputPath)
         try container.encode(status, forKey: .status)
         try container.encode(phase, forKey: .phase)
@@ -500,18 +508,20 @@ class ImageTask: Identifiable, Codable {
         try container.encode(projectId, forKey: .projectId)
     }
     
-    init(inputPaths: [String], projectId: UUID? = nil) {
+    init(inputPaths: [String], projectId: UUID? = nil, inputBookmarks: [Data]? = nil) {
         self.id = UUID()
         self.inputPaths = inputPaths
+        self.inputBookmarks = inputBookmarks
         self.status = "pending"
         self.phase = .pending
         self.pollCount = 0
         self.projectId = projectId
     }
     
-    init(inputPath: String, projectId: UUID? = nil) {
+    init(inputPath: String, projectId: UUID? = nil, inputBookmark: Data? = nil) {
         self.id = UUID()
         self.inputPaths = [inputPath]
+        self.inputBookmarks = inputBookmark.map { [$0] }
         self.status = "pending"
         self.phase = .pending
         self.pollCount = 0
@@ -521,8 +531,14 @@ class ImageTask: Identifiable, Codable {
     // Backward compatibility for single input path
     var inputPath: String { inputPaths.first ?? "" }
     
-    var inputURLs: [URL] { inputPaths.map { URL(fileURLWithPath: $0) } }
-    var inputURL: URL { inputURLs.first ?? URL(fileURLWithPath: "") }
+    /// Resolves input URLs, using security-scoped bookmarks when available
+    var inputURLs: [URL] {
+        if let bookmarks = inputBookmarks, bookmarks.count == inputPaths.count {
+            return bookmarks.compactMap { AppPaths.resolveBookmark($0) }
+        }
+        return inputPaths.map { URL(fileURLWithPath: $0) }
+    }
+    var inputURL: URL { inputURLs.first ?? URL(fileURLWithPath: inputPath) }
     var outputURL: URL? { outputPath.map { URL(fileURLWithPath: $0) } }
     var filename: String { 
         if inputPaths.count > 1 {

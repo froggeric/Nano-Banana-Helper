@@ -2,6 +2,30 @@
 
 All notable changes to Nano Banana Helper will be documented in this file.
 
+## [1.3.0] - 2026-03-22
+
+### Added
+- **Text-to-Image Generation**: New generation mode that creates images from text prompts without requiring input images
+  - Mode toggle (Image/Text) in Inspector header
+  - Variations selector: Generate 1-4 images per request
+  - Text mode view in Staging area with helpful prompt tips
+  - Output cost only (no input image cost)
+
+### Changed
+- **Conditional UI**: Multi-Input toggle is now hidden in Text mode
+- **Button Text**: Dynamic button text based on mode ("Start Batch" / "Generate N Images")
+- **Output Naming**: Text mode generates unique filenames: `generated_YYYYMMDD_HHMMSS_<uuid8>.png`
+
+### Technical
+- Added `GenerationMode` enum with `Sendable` conformance
+- Added `textImageCount` property with min/max clamping
+- Added `isReadyForGeneration` computed property for mode-aware validation
+- Added `ImageEditRequest.textOnly()` convenience method
+- Added `enqueueTextGeneration()` to `BatchOrchestrator`
+- Added `BatchJob.isTextMode` with full Codable support
+- Added `ImageSize.calculateTextModeCost()` static method
+- Created `Constants.swift` for shared constants
+
 ## [1.2.0] - 2026-03-21
 
 ### Fixed

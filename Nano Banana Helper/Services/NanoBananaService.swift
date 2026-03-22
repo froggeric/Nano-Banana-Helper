@@ -2,12 +2,30 @@ import Foundation
 
 /// Request structure for image editing
 struct ImageEditRequest: Sendable {
-    let inputImageURLs: [URL] // Changed to array
+    let inputImageURLs: [URL] // Empty array for text-to-image generation
     let prompt: String
     let systemInstruction: String?
     let aspectRatio: String
     let imageSize: String
     let useBatchTier: Bool
+    
+    /// Convenience initializer for text-to-image generation (no input images)
+    static func textOnly(
+        prompt: String,
+        systemInstruction: String? = nil,
+        aspectRatio: String,
+        imageSize: String,
+        useBatchTier: Bool
+    ) -> ImageEditRequest {
+        ImageEditRequest(
+            inputImageURLs: [],
+            prompt: prompt,
+            systemInstruction: systemInstruction,
+            aspectRatio: aspectRatio,
+            imageSize: imageSize,
+            useBatchTier: useBatchTier
+        )
+    }
 }
 
 /// Response structure from Gemini API
@@ -150,8 +168,9 @@ actor NanoBananaService {
             ])
         }
         
-        // Validate size for batch requests (20MB limit for inline requests)
-        if request.useBatchTier && totalDataSize > maxBatchPayloadSize {
+        // Validate size for batch requests WITH images (20MB limit for inline requests)
+        // Skip validation for text-to-image mode (empty inputImageURLs)
+        if !request.inputImageURLs.isEmpty && request.useBatchTier && totalDataSize > maxBatchPayloadSize {
             throw NanoBananaError.batchError(message: "Total image data (\(totalDataSize / 1024 / 1024)MB) exceeds 20MB limit for batch inline requests. Use smaller images or fewer images per batch.")
         }
         

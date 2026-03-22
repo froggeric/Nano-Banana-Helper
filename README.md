@@ -4,7 +4,7 @@ Nano Banana Helper is a powerful macOS application for batch processing image ed
 
 ![MainScreen](https://github.com/joshmac007/Nano-Banana-Helper/blob/main/MainScreen.jpeg)
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -14,6 +14,7 @@ Nano Banana Helper is a powerful macOS application for batch processing image ed
 ### 🚀 Core Capabilities
 - **Batch Orchestration**: Process hundreds of images concurrently with robust queue management.
 - **Smart Staging**: Drag and drop support for individual images or entire directories.
+- **Text-to-Image**: Generate images from text prompts without input images. Create 1-4 variations per request.
 - **Multi-Input Mode**: Merge multiple input images into a single output using advanced prompt instructions.
 - **Cost Estimation**: Real-time cost calculation based on image size, count, and selected model tier.
 - **Model Selection**: Choose between Nano Banana 2 (fastest), Nano Banana (stable), or Nano Banana Pro (highest quality) in Settings.
@@ -73,13 +74,23 @@ Nano Banana Helper is a powerful macOS application for batch processing image ed
 
 1. **Setup API Key**: On first launch, go to **Settings** (`Cmd+,`) and enter your Gemini API Key.
 2. **Select Model** (optional): In Settings, choose your preferred image generation model.
-2. **Create a Project**: Use the "+" button in the gallery to start a new workspace.
-3. **Stage Images**: Drag images onto the "Drop Zone" in the Workbench.
-4. **Configure**: 
+3. **Create a Project**: Use the "+" button in the gallery to start a new workspace.
+
+### Image Mode (Edit Existing Images)
+4. **Stage Images**: Drag images onto the "Drop Zone" in the Workbench.
+5. **Configure**: 
    - Enter your prompt in the Inspector.
    - Choose your desired resolution and aspect ratio.
    - Enable "Batch Tier" if speed is not critical to save costs.
-5. **Execute**: Click **Start Batch**. Monitor progress in the "Results" tab.
+6. **Execute**: Click **Start Batch**. Monitor progress in the "Results" tab.
+
+### Text Mode (Generate from Scratch)
+4. **Select Text Mode**: Click "Text" in the Inspector header mode toggle.
+5. **Configure**: 
+   - Enter your prompt in the Inspector (be descriptive about style, mood, composition).
+   - Set the number of variations (1-4 images).
+   - Choose resolution and aspect ratio.
+6. **Execute**: Click **Generate Images**. Monitor progress in the "Results" tab.
 
 ## Contributing
 

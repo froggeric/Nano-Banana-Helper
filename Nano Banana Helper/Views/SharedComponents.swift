@@ -25,6 +25,7 @@ struct CostEstimatorView: View {
     let imageSize: String
     let isBatchTier: Bool
     let isMultiInput: Bool
+    let generationMode: GenerationMode
     
     private var inputCostPerImage: Double { isBatchTier ? 0.0006 : 0.0011 }
     
@@ -41,26 +42,41 @@ struct CostEstimatorView: View {
     }
     
     private var totalCost: Double {
-        // Input cost: charged per input image
-        // Output cost: charged per output image (1 for Multi-Input, N otherwise)
-        let inputTotal = Double(imageCount) * inputCostPerImage
-        let outputTotal = Double(outputCount) * outputCostPerImage
-        return inputTotal + outputTotal
+        switch generationMode {
+        case .image:
+            // Input cost: charged per input image
+            // Output cost: charged per output image (1 for Multi-Input, N otherwise)
+            let inputTotal = Double(imageCount) * inputCostPerImage
+            let outputTotal = Double(outputCount) * outputCostPerImage
+            return inputTotal + outputTotal
+        case .text:
+            // Text mode: no input cost, only output cost
+            return Double(imageCount) * outputCostPerImage
+        }
     }
     
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                if isMultiInput {
-                    Text("\(imageCount) inputs → 1 output @ \(imageSize)")
+                switch generationMode {
+                case .image:
+                    if isMultiInput {
+                        Text("\(imageCount) inputs → 1 output @ \(imageSize)")
+                            .font(.subheadline)
+                    } else {
+                        Text("\(imageCount) images @ \(imageSize)")
+                            .font(.subheadline)
+                    }
+                    Text("$\(inputCostPerImage, specifier: "%.4f")/input + $\(outputCostPerImage, specifier: "%.3f")/output")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case .text:
+                    Text("\(imageCount) image\(imageCount == 1 ? "" : "s") @ \(imageSize)")
                         .font(.subheadline)
-                } else {
-                    Text("\(imageCount) images @ \(imageSize)")
-                        .font(.subheadline)
+                    Text("$\(outputCostPerImage, specifier: "%.3f")/output (text-to-image)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                Text("$\(inputCostPerImage, specifier: "%.4f")/input + $\(outputCostPerImage, specifier: "%.3f")/output")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
             Spacer()
             Text("≈ $\(totalCost, specifier: "%.2f")")

@@ -84,6 +84,33 @@ final class BatchOrchestrator {
         }
     }
     
+    /// Enqueue a text-to-image generation batch job
+    func enqueueTextGeneration(
+        prompt: String,
+        systemPrompt: String? = nil,
+        aspectRatio: String,
+        imageSize: String,
+        outputDirectory: String,
+        useBatchTier: Bool,
+        imageCount: Int,
+        projectId: UUID?
+    ) {
+        let batch = BatchJob(
+            prompt: prompt,
+            systemPrompt: systemPrompt,
+            aspectRatio: aspectRatio,
+            imageSize: imageSize,
+            outputDirectory: outputDirectory,
+            useBatchTier: useBatchTier,
+            projectId: projectId
+        )
+        batch.isTextMode = true
+        batch.tasks = (0..<imageCount).map { _ in
+            ImageTask(inputPaths: [], projectId: projectId)
+        }
+        enqueue(batch)
+    }
+    
     /// Start or resume batch processing
     func start(batch: BatchJob) async {
         guard batch.status != "processing" && batch.status != "completed" else { return }
@@ -332,14 +359,27 @@ final class BatchOrchestrator {
             }
         }
         
-        let request = ImageEditRequest(
-            inputImageURLs: data.inputURLs,
-            prompt: settings.prompt,
-            systemInstruction: settings.systemPrompt,
-            aspectRatio: settings.aspectRatio,
-            imageSize: settings.imageSize,
-            useBatchTier: settings.useBatchTier
-        )
+        let request: ImageEditRequest
+        if data.inputURLs.isEmpty {
+            // Text-to-image mode: no input images
+            request = ImageEditRequest.textOnly(
+                prompt: settings.prompt,
+                systemInstruction: settings.systemPrompt,
+                aspectRatio: settings.aspectRatio,
+                imageSize: settings.imageSize,
+                useBatchTier: settings.useBatchTier
+            )
+        } else {
+            // Image editing mode: with input images
+            request = ImageEditRequest(
+                inputImageURLs: data.inputURLs,
+                prompt: settings.prompt,
+                systemInstruction: settings.systemPrompt,
+                aspectRatio: settings.aspectRatio,
+                imageSize: settings.imageSize,
+                useBatchTier: settings.useBatchTier
+            )
+        }
         
         do {
             if settings.useBatchTier {
@@ -527,10 +567,22 @@ final class BatchOrchestrator {
         let directoryURL = URL(fileURLWithPath: directory)
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         
-        let inputName = URL(fileURLWithPath: task.inputPaths.first ?? "image")
-            .deletingPathExtension().lastPathComponent
         let ext = mimeType == "image/png" ? "png" : "jpg"
-        let baseName = "\(inputName)_edited"
+        
+        let baseName: String
+        if task.inputPaths.isEmpty {
+            // Text mode: use filesystem-safe timestamp with UUID component for uniqueness
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyyMMdd_HHmmss"
+            let timestamp = formatter.string(from: Date())
+            let shortID = task.id.uuidString.prefix(8)
+            baseName = "generated_\(timestamp)_\(shortID)"
+        } else {
+            // Image mode: use input filename
+            let inputName = URL(fileURLWithPath: task.inputPaths.first ?? "image")
+                .deletingPathExtension().lastPathComponent
+            baseName = "\(inputName)_edited"
+        }
         
         // Find a unique filename to avoid silently overwriting existing outputs
         var candidate = directoryURL.appendingPathComponent("\(baseName).\(ext)")

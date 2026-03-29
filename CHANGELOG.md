@@ -2,6 +2,55 @@
 
 All notable changes to Nano Banana Helper will be documented in this file.
 
+## [1.3.3] - 2026-03-29
+
+### Added
+- **Prompt Presets**: Prompts are now saved as bundled pairs (user + system prompt) instead of separate templates
+  - New `PromptPreset` data model replaces `SavedPrompt` / `PromptType`
+  - Saves both user and system prompt together with optional tags and timestamps
+- **Tag System**: Curated tags for organizing presets
+  - Create, rename, and delete tags from Settings > Prompts
+  - Filter presets by tag in both the Inspector popover and Settings
+  - Assign tags when saving presets
+- **Preset Library Popover**: New popover browser accessible from the Inspector bookmark icon
+  - Search presets by name or prompt content (case-insensitive)
+  - Horizontal tag filter chips
+  - Context menu: Load, Edit, Duplicate, Delete, Set as Project Default
+  - Inline editing for quick name and prompt changes
+  - Star indicator for project default preset
+- **Project Default Preset**: Projects can have a default preset that auto-loads on project switch
+  - "Set as Project Default" option in popover context menu
+  - Auto-loads user and system prompt when switching projects
+- **Save Preset Sheet**: New modal sheet for saving presets with name field and tag selection
+- **Settings > Prompts Tab Redesign**: Split layout with tag sidebar and adaptive preset card grid
+  - Tag sidebar with preset counts and right-click context menu (rename/delete)
+  - Preset cards showing name, prompt preview, system prompt indicator, tags, and timestamp
+  - Edit sheet for full preset editing (name, user prompt, system prompt, tags)
+
+### Changed
+- **Inspector Prompt Section**: Stacked TextEditors replace the old tabbed User/System toggle
+  - Both user and system prompt editors are always visible simultaneously
+  - Placeholder text overlays on empty editors
+  - Max height increased from 120pt to 160pt per editor
+  - Bookmark icon opens popover browser instead of dropdown menu
+  - Save button uses standard SF Symbol instead of custom FloppyIcon
+- `PromptLibrary` now uses v2 persistence format (`{version: 2, tags: [...], presets: [...]}`)
+- `promptLibrary` is now injected via `.environment()` in the main view hierarchy
+
+### Fixed
+- **System Prompt Data Loss**: System prompt is now recorded in history entries and restored on reuse
+  - Added `systemPrompt: String?` to `HistoryEntry` with backward-compatible Codable
+  - All 4 HistoryEntry creation sites in `BatchOrchestrator` now pass system prompt
+  - "Reuse Settings" in history now restores both user and system prompt
+  - History list displays system prompt with purple indicator
+- **V1 Migration**: Existing `saved_prompts.json` files (old `[SavedPrompt]` array format) automatically migrate to the new v2 `PromptPreset` format, merging same-named user/system pairs
+
+### Removed
+- `PromptType` enum (replaced by unified `PromptPreset`)
+- `SavedPrompt` struct (replaced by `PromptPreset`)
+- `FloppyIcon` custom Canvas view (replaced by SF Symbol `square.and.arrow.down`)
+- `PromptLibrary.userPrompts` and `.systemPrompts` computed properties (no longer needed)
+
 ## [1.3.2] - 2026-03-29
 
 ### Added

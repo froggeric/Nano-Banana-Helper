@@ -356,7 +356,7 @@ struct SettingsView: View {
         Form {
             Section("About Nano Banana Helper") {
                 LabeledContent("Version") {
-                    Text("1.3.2")
+                    Text("1.3.3")
                         .fontWeight(.bold)
                 }
 
